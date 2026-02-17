@@ -37,7 +37,7 @@ def upload_note(base_url: str, token: str, vault: str, path: str, content: str) 
         method="POST",
         headers={
             "Content-Type": "application/json",
-            "Authorization": token,
+            "Authorization": f"Bearer {token}",
         },
     )
 
