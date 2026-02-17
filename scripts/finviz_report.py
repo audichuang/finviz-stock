@@ -18,7 +18,7 @@ from datetime import datetime
 from pathlib import Path
 
 # 預設輸出目錄: Obsidian Vault
-OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian Vault" / "finviz-stock"
+OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian Vault" / "Obsidian" / "finviz-stock"
 
 
 # ============================================================
