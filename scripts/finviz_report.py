@@ -12,8 +12,13 @@ finviz_report.py — 美股研究報告自動生成引擎
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
+from pathlib import Path
+
+# 預設輸出目錄: Obsidian Vault
+OBSIDIAN_DIR = Path.home() / "Documents" / "Obsidian Vault" / "finviz-stock"
 
 
 # ============================================================
@@ -717,10 +722,12 @@ def main():
     parser.add_argument("--filters", "-f", default="{}", help="篩選條件 JSON")
     parser.add_argument("--signal", default="", help="訊號 (e.g. 'Top Gainers')")
     parser.add_argument("--limit", "-l", type=int, default=20, help="篩選結果上限")
-    parser.add_argument("--output", "-o", help="輸出檔案路徑")
+    parser.add_argument("--output", "-o", help="自訂輸出路徑 (預設: Obsidian Vault)")
+    parser.add_argument("--stdout", action="store_true", help="輸出到 stdout 而非檔案")
     args = parser.parse_args()
 
     output_parts = []
+    today = datetime.now().strftime("%Y-%m-%d")
 
     if args.market_overview:
         output_parts.append(get_market_overview())
@@ -740,12 +747,32 @@ def main():
 
     result = "\n".join(output_parts)
 
-    if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
-            f.write(result)
-        print(f"報告已存至: {args.output}", file=sys.stderr)
-    else:
+    # 輸出到 stdout
+    if args.stdout:
         print(result)
+        return
+
+    # 決定輸出路徑
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        # 自動生成檔名並存到 Obsidian
+        OBSIDIAN_DIR.mkdir(parents=True, exist_ok=True)
+        if args.market_overview and args.ticker:
+            filename = f"daily_{today}.md"
+        elif args.market_overview:
+            filename = f"daily_{today}.md"
+        elif args.ticker:
+            tickers = [t.strip().upper() for t in args.ticker.split(",")]
+            filename = f"{'_'.join(tickers)}_{today}.md"
+        else:
+            filename = f"screener_{today}.md"
+        output_path = OBSIDIAN_DIR / filename
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(result)
+    print(f"報告已存至: {output_path}", file=sys.stderr)
 
 
 if __name__ == "__main__":
