@@ -18,6 +18,26 @@ import sys
 from datetime import datetime
 
 
+def _parse_market_cap(val) -> float:
+    """解析 Market Cap 字串 (e.g. '12.34B') 為數值"""
+    if isinstance(val, (int, float)):
+        return float(val)
+    if not isinstance(val, str):
+        return 0.0
+    val = val.strip().upper()
+    multipliers = {"T": 1e12, "B": 1e9, "M": 1e6, "K": 1e3}
+    for suffix, mult in multipliers.items():
+        if val.endswith(suffix):
+            try:
+                return float(val[:-1]) * mult
+            except ValueError:
+                return 0.0
+    try:
+        return float(val)
+    except ValueError:
+        return 0.0
+
+
 def get_ticker_data(ticker: str) -> str:
     """擷取個股原始數據"""
     from finvizfinance.quote import finvizfinance
@@ -31,8 +51,8 @@ def get_ticker_data(ticker: str) -> str:
     try:
         desc = stock.ticker_description()
         lines.append(f"## 公司描述\n{desc}\n")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 公司描述取得失敗: {e}", file=sys.stderr)
 
     # 基本面指標 (全部)
     try:
@@ -52,16 +72,16 @@ def get_ticker_data(ticker: str) -> str:
         peers = stock.ticker_peer()
         if peers:
             lines.append(f"## 同業股票\n{', '.join(peers)}\n")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 同業股票取得失敗: {e}", file=sys.stderr)
 
     # 技術訊號
     try:
         signals = stock.ticker_signal()
         if signals:
             lines.append(f"## 技術訊號\n{'、'.join(signals)}\n")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 技術訊號取得失敗: {e}", file=sys.stderr)
 
     # 分析師評級
     try:
@@ -70,8 +90,8 @@ def get_ticker_data(ticker: str) -> str:
             lines.append("## 分析師評級\n")
             lines.append(ratings.head(10).to_markdown(index=False))
             lines.append("")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 分析師評級取得失敗: {e}", file=sys.stderr)
 
     # 新聞
     try:
@@ -81,8 +101,8 @@ def get_ticker_data(ticker: str) -> str:
             for _, row in news.head(10).iterrows():
                 lines.append(f"* **{row.get('Date', '')}** [{row.get('Title', '')}]({row.get('Link', '')}) *({row.get('Source', '')})*")
             lines.append("")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 新聞取得失敗: {e}", file=sys.stderr)
 
     # 內部交易
     try:
@@ -91,15 +111,15 @@ def get_ticker_data(ticker: str) -> str:
             lines.append("## 內部交易\n")
             lines.append(insider.head(10).to_markdown(index=False))
             lines.append("")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] 內部交易取得失敗: {e}", file=sys.stderr)
 
     # K線圖 URL
     try:
         chart_url = stock.ticker_charts(timeframe="daily", charttype="advanced", urlonly=True)
         lines.append(f"## K線圖\n![{ticker} Chart]({chart_url})\n")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[{ticker}] K線圖取得失敗: {e}", file=sys.stderr)
 
     return "\n".join(lines)
 
@@ -111,6 +131,7 @@ def get_market_data() -> str:
     from finvizfinance.insider import Insider
     from finvizfinance.earnings import Earnings
     from finvizfinance.group.overview import Overview as GroupOverview
+    from finvizfinance.calendar import Calendar
 
     lines = []
     lines.append("# 美股大盤原始數據")
@@ -169,8 +190,8 @@ def get_market_data() -> str:
             lines.append("## 本週內部人買入\n")
             lines.append(ins_buys.head(10).to_markdown(index=False))
             lines.append("")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"內部交易取得失敗: {e}", file=sys.stderr)
 
     # 財報日曆
     try:
@@ -181,13 +202,24 @@ def get_market_data() -> str:
             for day_label, df in days.items():
                 if df is not None and len(df) > 0:
                     if "Market Cap" in df.columns:
-                        big = df[df["Market Cap"] > 5e9].head(5)
+                        df["_mc_num"] = df["Market Cap"].apply(_parse_market_cap)
+                        big = df[df["_mc_num"] > 5e9].drop(columns=["_mc_num"]).head(5)
                         if len(big) > 0:
                             lines.append(f"### {day_label}\n")
                             lines.append(big.to_markdown(index=False))
                             lines.append("")
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"財報日曆取得失敗: {e}", file=sys.stderr)
+
+    # 經濟日曆
+    try:
+        cal = Calendar().calendar()
+        if cal is not None and len(cal) > 0:
+            lines.append("## 經濟日曆\n")
+            lines.append(cal.to_markdown(index=False))
+            lines.append("")
+    except Exception as e:
+        print(f"經濟日曆取得失敗: {e}", file=sys.stderr)
 
     return "\n".join(lines)
 

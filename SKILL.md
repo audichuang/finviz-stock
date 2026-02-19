@@ -1,34 +1,33 @@
 ***
 
 name: finviz-stock
-description: "US stock research & daily report generator using finvizfinance + finviz.com. Use for: individual stock analysis, market daily overview, stock screening, stock comparison. Trigger keywords: US stock, finviz, stock analysis, market overview, daily report, 美股, 研究報告, 選股, 個股分析, 每日報告."
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+description: "US stock research & daily report generator using finvizfinance + finviz.com. Use for individual stock analysis, market daily overview, stock screening, stock comparison. Trigger keywords: US stock, finviz, stock analysis, market overview, daily report, 美股, 研究報告, 選股, 個股分析, 每日報告."
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Finviz Stock — 美股研究報告技能
 
 基於 `finvizfinance` 擷取美股數據，由 AI 分析產出高品質研究報告。
 
+> **這是編排技能**：資料擷取用本地腳本，報告存入 Obsidian 則調用 `saving-to-obsidian` 原子技能。
+
 ## 環境設定
 
 ```bash
-pip install finvizfinance pandas tabulate
+# 首次設定（在 skill 目錄下）
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
 ```
 
-> **Doppler 配置**: 所有涉及上傳的命令需加前綴 `doppler run -p finviz -c dev --`
-
-| 環境變數 | 說明 | 範例 |
-|----------|------|------|
-| `FAST_NOTE_URL` | Fast Note Sync 伺服器 URL | `https://note.example.com` |
-| `FAST_NOTE_TOKEN` | API Token | `eyJhbGci...` |
-| `FAST_NOTE_VAULT` | Vault 名稱 | `Obsidian` |
+> **執行腳本時**需先啟用 venv: `source venv/bin/activate`
 
 ## 架構
 
 ```
-腳本 (數據擷取) → AI Agent (分析推理) → 上傳到 Obsidian
+腳本 (數據擷取) → AI Agent (分析推理) → saving-to-obsidian (上傳)
      ↑                   ↑                    ↑
-finviz_report.py    本 SKILL.md          upload_note.py
-                    + templates/          (Fast Note Sync API)
+finviz_report.py    本 SKILL.md          原子技能
+                    + templates/
 ```
 
 > **核心理念**: 腳本只負責擷取乾淨的原始數據，**所有分析判斷由 AI 完成**。不要搬數據，要解讀數據。
@@ -59,19 +58,18 @@ python3 scripts/finviz_report.py --screener --filters '{"Sector":"Technology"}'
 
 模板中的 `<!-- AI 分析指引 -->` 註釋指導 AI 如何分析每個段落。
 
-## 上傳報告
+## 上傳報告到 Obsidian
 
-> **路徑錨定**: `scripts/upload_note.py`
+使用 `saving-to-obsidian` 原子技能：
 
 ```bash
-# 上傳檔案到 Obsidian Vault
-doppler run -p finviz -c dev -- python3 scripts/upload_note.py report.md
+# 上傳已生成的報告檔案
+doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
+  /tmp/AAPL_2026-02-17.md --path "finviz-stock/AAPL_2026-02-17.md"
 
-# 指定 Vault 內路徑
-doppler run -p finviz -c dev -- python3 scripts/upload_note.py report.md --path "finviz-stock/daily_2026-02-17.md"
-
-# 從 stdin 讀取內容上傳
-echo "# 報告" | doppler run -p finviz -c dev -- python3 scripts/upload_note.py --stdin --path "finviz-stock/report.md"
+# 從 stdin 上傳
+echo "# 報告" | doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
+  --stdin --path "finviz-stock/report.md"
 ```
 
 | 類型 | Vault 內路徑 |
@@ -93,7 +91,7 @@ echo "# 報告" | doppler run -p finviz -c dev -- python3 scripts/upload_note.py
 2. 同時擷取同業數據以做比較: `--ticker [PEER1],[PEER2],[PEER3]`
 3. 讀取 `templates/stock_report.example.md` 模板結構
 4. 根據數據 + 模板中的 AI 分析指引，**逐段填寫分析**，存為 `/tmp/[TICKER]_YYYY-MM-DD.md`
-5. 上傳: `doppler run -p finviz -c dev -- python3 scripts/upload_note.py /tmp/[TICKER]_YYYY-MM-DD.md`
+5. 上傳: `doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/[TICKER]_YYYY-MM-DD.md --path "finviz-stock/[TICKER]_YYYY-MM-DD.md"`
 
 **AI 分析重點** (不是搬數據！):
 
@@ -111,7 +109,7 @@ echo "# 報告" | doppler run -p finviz -c dev -- python3 scripts/upload_note.py
 1. 執行 `python3 scripts/finviz_report.py --market-overview` 擷取數據
 2. 讀取 `templates/daily_report.example.md` 模板結構
 3. 根據數據 + 模板指引，**逐段分析填寫**，存為 `/tmp/daily_YYYY-MM-DD.md`
-4. 上傳: `doppler run -p finviz -c dev -- python3 scripts/upload_note.py /tmp/daily_YYYY-MM-DD.md`
+4. 上傳: `doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/daily_YYYY-MM-DD.md --path "finviz-stock/daily_YYYY-MM-DD.md"`
 
 **AI 分析重點**:
 
