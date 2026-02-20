@@ -1,8 +1,7 @@
-***
-
+---
 name: finviz-stock
 description: "US stock research & daily report generator using finvizfinance + finviz.com. Use for individual stock analysis, market daily overview, stock screening, stock comparison. Trigger keywords: US stock, finviz, stock analysis, market overview, daily report, 美股, 研究報告, 選股, 個股分析, 每日報告."
------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---
 
 # Finviz Stock — 美股研究報告技能
 
@@ -64,11 +63,11 @@ python3 scripts/finviz_report.py --screener --filters '{"Sector":"Technology"}'
 
 ```bash
 # 上傳已生成的報告檔案
-doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
+doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
   /tmp/AAPL_2026-02-17.md --path "finviz-stock/AAPL_2026-02-17.md"
 
 # 從 stdin 上傳
-echo "# 報告" | doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
+echo "# 報告" | doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py \
   --stdin --path "finviz-stock/report.md"
 ```
 
@@ -91,7 +90,7 @@ echo "# 報告" | doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obs
 2. 同時擷取同業數據以做比較: `--ticker [PEER1],[PEER2],[PEER3]`
 3. 讀取 `templates/stock_report.example.md` 模板結構
 4. 根據數據 + 模板中的 AI 分析指引，**逐段填寫分析**，存為 `/tmp/[TICKER]_YYYY-MM-DD.md`
-5. 上傳: `doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/[TICKER]_YYYY-MM-DD.md --path "finviz-stock/[TICKER]_YYYY-MM-DD.md"`
+5. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/[TICKER]_YYYY-MM-DD.md --path "finviz-stock/[TICKER]_YYYY-MM-DD.md"`
 
 **AI 分析重點** (不是搬數據！):
 
@@ -109,7 +108,7 @@ echo "# 報告" | doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obs
 1. 執行 `python3 scripts/finviz_report.py --market-overview` 擷取數據
 2. 讀取 `templates/daily_report.example.md` 模板結構
 3. 根據數據 + 模板指引，**逐段分析填寫**，存為 `/tmp/daily_YYYY-MM-DD.md`
-4. 上傳: `doppler run -p finviz -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/daily_YYYY-MM-DD.md --path "finviz-stock/daily_YYYY-MM-DD.md"`
+4. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/daily_YYYY-MM-DD.md --path "finviz-stock/daily_YYYY-MM-DD.md"`
 
 **AI 分析重點**:
 

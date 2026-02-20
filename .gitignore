@@ -1,5 +1,11 @@
+# Python
 __pycache__/
-*.pyc
-output/
+*.py[cod]
+.venv/
 venv/
+
+# OS
 .DS_Store
+
+# Output
+output/
