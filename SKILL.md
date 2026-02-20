@@ -11,14 +11,13 @@ description: "US stock research & daily report generator using finvizfinance + f
 
 ## 環境設定
 
+> **每次執行腳本前**，先用下面這行確認 venv 存在（不存在會自動建立）：
+
 ```bash
-# 首次設定（在 skill 目錄下）
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+[ -d ~/skills/finviz-stock/venv ] || (cd ~/skills/finviz-stock && python3 -m venv venv && venv/bin/pip install -r requirements.txt -q && echo "venv ready")
 ```
 
-> **執行腳本時**需先啟用 venv: `source venv/bin/activate`
+> 確認後，所有腳本一律用 `~/skills/finviz-stock/venv/bin/python3` 執行，**不需要 `source activate`**。
 
 ## 架構
 
@@ -36,14 +35,17 @@ finviz_report.py    本 SKILL.md          原子技能
 > **路徑錨定**: `scripts/finviz_report.py`
 
 ```bash
+PYTHON=~/skills/finviz-stock/venv/bin/python3
+SCRIPT=~/skills/finviz-stock/scripts/finviz_report.py
+
 # 個股原始數據 (輸出到 stdout)
-python3 scripts/finviz_report.py --ticker AAPL
+$PYTHON $SCRIPT --ticker AAPL
 
 # 大盤原始數據
-python3 scripts/finviz_report.py --market-overview
+$PYTHON $SCRIPT --market-overview
 
 # 篩選
-python3 scripts/finviz_report.py --screener --filters '{"Sector":"Technology"}'
+$PYTHON $SCRIPT --screener --filters '{"Sector":"Technology"}'
 ```
 
 ## 報告模板
@@ -86,11 +88,12 @@ echo "# 報告" | doppler run -p storage -c dev -- python3 ~/skills/saving-to-ob
 
 **步驟**:
 
-1. 執行 `python3 scripts/finviz_report.py --ticker [TICKER]` 擷取原始數據
-2. 同時擷取同業數據以做比較: `--ticker [PEER1],[PEER2],[PEER3]`
-3. 讀取 `templates/stock_report.example.md` 模板結構
-4. 根據數據 + 模板中的 AI 分析指引，**逐段填寫分析**，存為 `/tmp/[TICKER]_YYYY-MM-DD.md`
-5. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/[TICKER]_YYYY-MM-DD.md --path "finviz-stock/[TICKER]_YYYY-MM-DD.md"`
+1. 確認 venv：`[ -d ~/skills/finviz-stock/venv ] || (cd ~/skills/finviz-stock && python3 -m venv venv && venv/bin/pip install -r requirements.txt -q && echo "venv ready")`
+2. 擷取個股數據：`~/skills/finviz-stock/venv/bin/python3 ~/skills/finviz-stock/scripts/finviz_report.py --ticker [TICKER]`
+3. 同時擷取同業數據以做比較: `--ticker [PEER1],[PEER2],[PEER3]`
+4. 讀取 `templates/stock_report.example.md` 模板結構
+5. 根據數據 + 模板中的 AI 分析指引，**逐段填寫分析**，存為 `/tmp/[TICKER]_YYYY-MM-DD.md`
+6. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/[TICKER]_YYYY-MM-DD.md --path "finviz-stock/[TICKER]_YYYY-MM-DD.md"`
 
 **AI 分析重點** (不是搬數據！):
 
@@ -105,10 +108,11 @@ echo "# 報告" | doppler run -p storage -c dev -- python3 ~/skills/saving-to-ob
 
 **步驟**:
 
-1. 執行 `python3 scripts/finviz_report.py --market-overview` 擷取數據
-2. 讀取 `templates/daily_report.example.md` 模板結構
-3. 根據數據 + 模板指引，**逐段分析填寫**，存為 `/tmp/daily_YYYY-MM-DD.md`
-4. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/daily_YYYY-MM-DD.md --path "finviz-stock/daily_YYYY-MM-DD.md"`
+1. 確認 venv：`[ -d ~/skills/finviz-stock/venv ] || (cd ~/skills/finviz-stock && python3 -m venv venv && venv/bin/pip install -r requirements.txt -q && echo "venv ready")`
+2. 擷取大盤數據：`~/skills/finviz-stock/venv/bin/python3 ~/skills/finviz-stock/scripts/finviz_report.py --market-overview`
+3. 讀取 `templates/daily_report.example.md` 模板結構
+4. 根據數據 + 模板指引，**逐段分析填寫**，存為 `/tmp/daily_YYYY-MM-DD.md`
+5. 上傳: `doppler run -p storage -c dev -- python3 ~/skills/saving-to-obsidian/scripts/save_note.py /tmp/daily_YYYY-MM-DD.md --path "finviz-stock/daily_YYYY-MM-DD.md"`
 
 **AI 分析重點**:
 
@@ -123,9 +127,10 @@ echo "# 報告" | doppler run -p storage -c dev -- python3 ~/skills/saving-to-ob
 
 **步驟**:
 
-1. 將需求轉換為 filters\_dict
-2. 執行 `--screener --filters '...'`
-3. 對結果前 5 名做簡要分析和推薦
+1. 確認 venv：`[ -d ~/skills/finviz-stock/venv ] || (cd ~/skills/finviz-stock && python3 -m venv venv && venv/bin/pip install -r requirements.txt -q && echo "venv ready")`
+2. 將需求轉換為 filters\_dict
+3. 執行：`~/skills/finviz-stock/venv/bin/python3 ~/skills/finviz-stock/scripts/finviz_report.py --screener --filters '...'`
+4. 對結果前 5 名做簡要分析和推薦
 
 ### 工作流 4: 個股比較
 
@@ -133,9 +138,10 @@ echo "# 報告" | doppler run -p storage -c dev -- python3 ~/skills/saving-to-ob
 
 **步驟**:
 
-1. 執行 `--ticker AAPL,MSFT` 取得兩股數據
-2. 建立 side-by-side 對照表
-3. 分析各自優劣，針對不同投資風格推薦
+1. 確認 venv：`[ -d ~/skills/finviz-stock/venv ] || (cd ~/skills/finviz-stock && python3 -m venv venv && venv/bin/pip install -r requirements.txt -q && echo "venv ready")`
+2. 擷取數據：`~/skills/finviz-stock/venv/bin/python3 ~/skills/finviz-stock/scripts/finviz_report.py --ticker AAPL,MSFT`
+3. 建立 side-by-side 對照表
+4. 分析各自優劣，針對不同投資風格推薦
 
 ***
 
